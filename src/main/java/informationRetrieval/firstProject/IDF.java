@@ -14,6 +14,6 @@ public class IDF {
 				}
 			}
 		}
-		return Math.log(totalNumberOfSentence / numberOfSentencesWithtermToCheckInIt);
+		return (1 + Math.log(totalNumberOfSentence / numberOfSentencesWithtermToCheckInIt));
 	}
 }
