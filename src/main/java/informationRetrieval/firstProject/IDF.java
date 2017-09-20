@@ -3,12 +3,12 @@ package informationRetrieval.firstProject;
 import java.util.List;
 
 public class IDF {
-	public double calculateIDF(List<String[]> allTerms, String termToCheck) {
+	public double calculateIDF(List<String[]> totalWordsPerQuestion, String eachWord) {
 		double numberOfSentencesWithtermToCheckInIt = 0;
-		double totalNumberOfSentence = allTerms.size();
-		for (String[] ss : allTerms) {
+		double totalNumberOfSentence = totalWordsPerQuestion.size();
+		for (String[] ss : totalWordsPerQuestion) {
 			for (String s : ss) {
-				if (s.equalsIgnoreCase(termToCheck)) {
+				if (s.equalsIgnoreCase(eachWord)) {
 					numberOfSentencesWithtermToCheckInIt++;
 					break;
 				}

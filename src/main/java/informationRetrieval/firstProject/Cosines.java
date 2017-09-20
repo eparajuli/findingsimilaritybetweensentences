@@ -1,7 +1,7 @@
 package informationRetrieval.firstProject;
 
 public class Cosines {
-	public double cosineSimilarity(double[] sentence1Vector, double[] sentence2Vector) {	
+	public Double cosineSimilarity(double[] sentence1Vector, double[] sentence2Vector) {	
 		
 		//Define variables
 		double dotProduct = 0.0;
