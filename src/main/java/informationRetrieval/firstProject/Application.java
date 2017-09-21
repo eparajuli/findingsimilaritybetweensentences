@@ -3,10 +3,13 @@ package informationRetrieval.firstProject;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map.Entry;
+
+import org.apache.lucene.analysis.CharArraySet;
+import org.apache.lucene.analysis.en.EnglishAnalyzer;
+import org.tartarus.snowball.ext.PorterStemmer;
 
 public class Application {
 
@@ -18,19 +21,19 @@ public class Application {
 	private List<Double> cosinesValuesForWhichTwoSentencesAreDuplicates =new ArrayList<Double>();
 	private  LinkedHashMap<String,String> hm = new LinkedHashMap<String, String>();
 	private List<OutputSet> wr = new ArrayList<OutputSet>();
+	private final CharArraySet stopWords = EnglishAnalyzer.getDefaultStopSet();
+
 
 	public static void main(String[] args) throws IOException {
-		Application a = new Application();
+		Application a = new Application();		 
 		a.forTrainingSet();
 		a.forTestSet();
 		a.exportCSV();
 	}
-
+	
 	public void forTrainingSet() throws IOException {
 		// Variables		 
 		List<TrainingSet> trainingRecords = new CSVParser().parseTrainCSV("/home/aaa/Documents/Information Retrieval/train.csv");
-		
-
 		// Clear Variables
 		hm.clear();
 		cosinesValuesForWhichTwoSentencesAreDuplicates.clear();
@@ -40,22 +43,27 @@ public class Application {
 			// s.getQuestion1() + " " + s.getQuestion2() + " " + s.getIsDuplicate());
 
 			// Tokenize question1
-			String[] tokenizedWordsOfQuestion1 = s.getQuestion1().trim().replaceAll("[\\W&&[^\\s]]", "").split("\\W+");
+			String[] tokenizedWordsOfQuestion1 = stemList(s.getQuestion1().trim().replaceAll("[\\W&&[^\\s]]", "").split("\\W+"));
+			
+			
+			
 			for (String word : tokenizedWordsOfQuestion1) {
-				if (!allUniqueWordsInAsentence.contains(word)) {
+				if (!allUniqueWordsInAsentence.contains(word) && !stopWords.contains(word)) {
 					allUniqueWordsInAsentence.add(word);
 				}
 			}
 			totalWordsPerQuestion.add(tokenizedWordsOfQuestion1);
+			totalWordsPerQuestion.removeAll(stopWords);
 
 			// Tokenize question 2
-			String[] tokenizedWordsOfQuestion2 = s.getQuestion2().trim().replaceAll("[\\W&&[^\\s]]", "").split("\\W+");
+			String[] tokenizedWordsOfQuestion2 = stemList(s.getQuestion2().trim().replaceAll("[\\W&&[^\\s]]", "").split("\\W+"));
 			for (String word : tokenizedWordsOfQuestion2) {
-				if (!allUniqueWordsInAsentence.contains(word)) {
+				if (!allUniqueWordsInAsentence.contains(word) && !stopWords.contains(word)) {
 					allUniqueWordsInAsentence.add(word);
 				}
 			}
 			totalWordsPerQuestion.add(tokenizedWordsOfQuestion2);
+			totalWordsPerQuestion.removeAll(stopWords);
 
 			// Calculate TFIDF
 			getTfIdf();
@@ -66,7 +74,6 @@ public class Application {
 				cosinesValuesForWhichTwoSentencesAreDuplicates.add(getCosineValueBetweenTwoQuestions());
 			}
 		}
-		
 		
 	}
 	
@@ -82,34 +89,35 @@ public class Application {
 			// s.getQuestion1() + " " + s.getQuestion2() + " " + s.getIsDuplicate());
 
 			// Tokenize question1
-			String[] tokenizedWordsOfQuestion1 = t.getQuestion1().trim().replaceAll("[\\W&&[^\\s]]", "").split("\\W+");
+			String[] tokenizedWordsOfQuestion1 = stemList(t.getQuestion1().trim().replaceAll("[\\W&&[^\\s]]", "").split("\\W+"));
 			for (String word : tokenizedWordsOfQuestion1) {
-				if (!allUniqueWordsInAsentence.contains(word)) {
+				if (!allUniqueWordsInAsentence.contains(word) && !stopWords.contains(word)) {
 					allUniqueWordsInAsentence.add(word);
 				}
 			}
 			totalWordsPerQuestion.add(tokenizedWordsOfQuestion1);
+			totalWordsPerQuestion.removeAll(stopWords);
 
 			// Tokenize question 2
-			String[] tokenizedWordsOfQuestion2 = t.getQuestion2().trim().replaceAll("[\\W&&[^\\s]]", "").split("\\W+");
+			String[] tokenizedWordsOfQuestion2 = stemList(t.getQuestion2().trim().replaceAll("[\\W&&[^\\s]]", "").split("\\W+"));
 			for (String word : tokenizedWordsOfQuestion2) {
-				if (!allUniqueWordsInAsentence.contains(word)) {
+				if (!allUniqueWordsInAsentence.contains(word) && !stopWords.contains(word)) {
 					allUniqueWordsInAsentence.add(word);
 				}
 			}
 			totalWordsPerQuestion.add(tokenizedWordsOfQuestion2);
-
+			totalWordsPerQuestion.removeAll(stopWords);
 			// Calculate TFIDF
 			getTfIdf();
 			 
-//			for(double d :cosinesValuesForWhichTwoSentencesAreDuplicates) {
-//				sum = sum+d;
-//			}
-//			mean = sum/cosinesValuesForWhichTwoSentencesAreDuplicates.size();
-			mean = 0.4007;
+			for(double d :cosinesValuesForWhichTwoSentencesAreDuplicates) {
+				sum = sum+d;
+			}
+			mean = sum/cosinesValuesForWhichTwoSentencesAreDuplicates.size();
+			mean = 0.4825946502170073;
 			// Calculate Cosine Similarity
 			System.out.println(getCosineValueBetweenTwoQuestions());
-			if((getCosineValueBetweenTwoQuestions() - mean) >0) {
+			if((getCosineValueBetweenTwoQuestions() - mean) >=0) {
 				hm.put(t.getId(), "1");
 				
 			}
@@ -154,6 +162,25 @@ public class Application {
 		tfidfSentencesVector.clear();		
 	}
 	
+	public String stemTerm (String term) {
+	    PorterStemmer stemmer = new PorterStemmer();
+	    stemmer.setCurrent(term);
+		stemmer.stem();
+		return  stemmer.getCurrent().toString();
+	}
+	
+	public String[] stemList (String[] terms) {
+	    PorterStemmer stemmer = new PorterStemmer();
+	    ArrayList<String> stemList = new ArrayList<String>();
+	    for(String term : terms) {
+	    	stemmer.setCurrent(term);
+			stemmer.stem();
+			stemList.add(stemmer.getCurrent());
+	    }
+	    
+		return  stemList.toArray(new String[stemList.size()]);
+	}
+
 	public void exportCSV() throws IOException {
 		//Delimiter used in CSV file
 	     String COMMA_DELIMITER = ",";
